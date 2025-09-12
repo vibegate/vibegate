@@ -1,0 +1,35 @@
+{
+  "name": "@repo/database",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push --skip-generate",
+    "db:migrate:dev": "prisma migrate dev --create-only",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "build": "npm run build:js && npm run build:types",
+    "build:js": "tsup src/index.ts --format cjs,esm",
+    "build:types": "tsc --emitDeclarationOnly",
+    "clean": "rm -rf dist",
+    "dev": "npm run build",
+    "format": "prisma format",
+    "lint": "eslint \"src/**/*.ts\"",
+    "prebuild": "npm run db:generate",
+    "predev": "npm run db:generate"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.13.4",
+    "prisma": "^6.5.0",
+    "tsup": "^8.3.6",
+    "typescript": "5.7.3"
+  },
+  "dependencies": {
+    "@prisma/client": "6.5.0"
+  }
+}
