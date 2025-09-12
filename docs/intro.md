@@ -40,41 +40,48 @@ Simple to use
 
 #### 鉴权
 
-使用JWT（JSON Web Tokens）进行用户身份验证和授权。所有需要身份验证的API都需要在请求头中包含有效的JWT。
-
-作为鉴权的jwt存在本地localStorage中。
+使用 JWT（JSON Web Tokens）进行用户身份验证和授权。默认通过 HttpOnly Cookie 携带，兼容 `Authorization: Bearer` 头用于脚本/CLI 访问。
 
 #### 应用转发
 
-应用转发通过反向代理实现。VibeGate将根据请求的路径或子域名将请求转发到相应的后端服务。
+通过独立网关服务的反向代理实现（Fastify + 原生 fetch）。VibeGate 根据路径前缀将请求转发到目标服务，支持：
+- 路由优先级（更长前缀优先）
+- 认证要求（匹配到路由后再校验）
+- 路径重写（去除匹配前缀）
 
-代理配置存储在数据库中，支持通过管理界面动态添加、修改和删除转发规则。
-
-### 项目结构
+### 项目结构（方案 B）
 
 #### docs
 
 存放项目开发相关文档。
 
+#### apps/gateway
+
+独立网关服务：Fastify + TypeScript。提供认证、代理路由管理 API、反向代理能力；内置插件系统。
+开发使用 SQLite，生产支持 Postgres（通过 `DATABASE_URL` 切换）。
+
+目录：
+- src/core: 认证、代理、DB、核心路由
+- src/plugins: 内置插件（示例 header 注入）
+- src/loader: 插件加载器
+
 #### apps/web
 
-登陆、注册以及管理端涉及的所有网页。
-使用Next.js + TailwindCSS + React + TypeScript
-后端逻辑也暂时置于此。
+Web 端（包含登录/注册与管理 UI）：Vite + React + TailwindCSS（shadcn/ui 风格组件），仅调用网关 API。
 
 #### apps/debugger
 
-用于作为后端应用调试的Next.js应用。
+调试用回源服务（Next.js），提供 `/api/echo` 回显接口，用于验证网关反向代理是否正确转发。
 
-#### packages/database
 
-数据库相关的逻辑。使用Prisma ORM。
+#### packages/plugin-sdk
 
-#### apps/cli
+插件开发 SDK。定义插件接口与受限的能力注入（日志、钩子等），用于开发内置或第三方插件。
 
-命令行工具。用于基础操作和启动MCP等
 
-## 数据模型（详见 packages/database/prisma/schema.prisma）
+
+
+## 数据模型（基于 Drizzle ORM）
 
 ### User
 - id (UUID)
@@ -124,13 +131,36 @@ Simple to use
 # 安装依赖
 pnpm install
 
-# 启动数据库
-docker-compose up -d
+# 启动管理 Web（含登录/注册）
+pnpm dev --filter web
 
-# 同步数据库schema（开发阶段）
-pnpm db:push
+# 启动网关（Fastify，默认 SQLite）
+pnpm dev --filter gateway
 
-# 启动开发服务器
-pnpm dev
+# 启动调试服务（回源，默认 3001）
+pnpm dev --filter debugger
+
+# 指定 Postgres（生产/本地均可）
+# 需提供 DATABASE_URL=postgres://user:pass@host:5432/db
+DATABASE_URL=postgres://... pnpm dev --filter gateway
 ```
 
+### 本地联调（Vite 代理）
+
+为确保管理 Web 在开发时能携带 HttpOnly Cookie 并避免跨域，建议在 `apps/web/vite.config.ts` 配置反向代理：
+
+```ts
+// apps/web/vite.config.ts
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 3000,
+    proxy: {
+      '/vibegate': {
+        target: 'http://localhost:4000', // 网关服务
+        changeOrigin: true,
+      },
+    },
+  },
+});
+```
