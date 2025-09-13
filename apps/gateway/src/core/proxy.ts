@@ -10,10 +10,15 @@ type ProxyRoute = {
   target: string;
   requireAuth: boolean;
   enabled: boolean;
+  order: number;
 };
 
-function sortBySpecificity(a: ProxyRoute, b: ProxyRoute) {
-  // longer path first
+function sortByOrder(a: ProxyRoute, b: ProxyRoute) {
+  // First sort by order (lower order = higher priority)
+  if (a.order !== b.order) {
+    return a.order - b.order;
+  }
+  // If order is the same, fallback to path length (longer path first for specificity)
   return b.path.length - a.path.length;
 }
 
@@ -38,7 +43,7 @@ export async function proxyRoutes(app: FastifyInstance) {
     if (cache && now - cache.ts < TTL) return cache.routes;
     const rows = await db.proxyRoutes.list(true);
     const list = rows as ProxyRoute[];
-    list.sort(sortBySpecificity);
+    list.sort(sortByOrder);
     cache = { routes: list, ts: now };
     return list;
   }

@@ -8,9 +8,31 @@ export function cn(...inputs: ClassValue[]) {
 export const API_BASE = import.meta.env.VITE_API_BASE || '/vibegate/api';
 
 export async function api<T = any>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {};
+
+  // Copy existing headers
+  if (init?.headers) {
+    if (init.headers instanceof Headers) {
+      init.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+    } else if (Array.isArray(init.headers)) {
+      init.headers.forEach(([key, value]) => {
+        headers[key] = value;
+      });
+    } else {
+      Object.assign(headers, init.headers);
+    }
+  }
+
+  // Only set Content-Type for requests with body
+  if (init?.body) {
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    headers,
     ...init,
   });
   if (res.status === 401) {

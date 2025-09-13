@@ -10,14 +10,23 @@ const CreateRouteSchema = z.object({
   path: z.string().startsWith('/').min(1),
   target: z.string().url(),
   requireAuth: z.boolean().optional().default(false),
-  enabled: z.boolean().optional().default(true)
+  enabled: z.boolean().optional().default(true),
+  order: z.number().int().min(0).optional().default(0)
 });
 
 const UpdateRouteSchema = z.object({
   path: z.string().startsWith('/').min(1).optional(),
   target: z.string().url().optional(),
   requireAuth: z.boolean().optional(),
-  enabled: z.boolean().optional()
+  enabled: z.boolean().optional(),
+  order: z.number().int().min(0).optional()
+});
+
+const UpdateOrderSchema = z.object({
+  routes: z.array(z.object({
+    id: z.string(),
+    order: z.number().int().min(0)
+  }))
 });
 
 async function requireAuth(request: FastifyRequest) {
@@ -86,12 +95,30 @@ export async function adminRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: 'Unauthorized' });
     }
     const id = (req.params as any).id as string;
-    
+
     const existing = await db.proxyRoutes.findById(id);
     if (!existing) return reply.code(404).send({ error: 'Route not found' });
-    
+
     await db.proxyRoutes.delete(id);
     invalidateProxyCache();
     return reply.send({ message: 'Route deleted successfully' });
+  });
+
+  app.put('/vibegate/api/admin/routes/order', async (req, reply) => {
+    try { await requireAdmin(req); } catch { return reply.code(403).send({ error: 'Forbidden' }); }
+
+    const parsed = UpdateOrderSchema.safeParse(req.body);
+    if (!parsed.success) return reply.code(400).send({ error: 'Invalid payload' });
+
+    // Update order for each route
+    for (const routeOrder of parsed.data.routes) {
+      const existing = await db.proxyRoutes.findById(routeOrder.id);
+      if (existing) {
+        await db.proxyRoutes.update(routeOrder.id, { order: routeOrder.order });
+      }
+    }
+
+    invalidateProxyCache();
+    return reply.send({ message: 'Route order updated successfully' });
   });
 }

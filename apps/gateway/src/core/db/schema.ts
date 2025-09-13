@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { pgTable, text as pgText, boolean as pgBoolean, timestamp as pgTimestamp } from 'drizzle-orm/pg-core';
+import { pgTable, text as pgText, boolean as pgBoolean, timestamp as pgTimestamp, integer as pgInteger } from 'drizzle-orm/pg-core';
 import { sqliteTable, text as sqliteText, integer as sqliteInteger } from 'drizzle-orm/sqlite-core';
 
 // We define dual schemas for portability across SQLite and Postgres.
@@ -21,6 +21,7 @@ export const proxyRoutesSqlite = sqliteTable('proxy_routes', {
   target: sqliteText('target').notNull(),
   requireAuth: sqliteInteger('require_auth', { mode: 'boolean' }).notNull().default(false),
   enabled: sqliteInteger('enabled', { mode: 'boolean' }).notNull().default(true),
+  order: sqliteInteger('order').notNull().default(0),
   createdAt: sqliteInteger('created_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`),
   updatedAt: sqliteInteger('updated_at', { mode: 'timestamp' }).notNull().default(sql`(unixepoch())`).$onUpdate(() => new Date())
 });
@@ -42,6 +43,7 @@ export const proxyRoutesPg = pgTable('proxy_routes', {
   target: pgText('target').notNull(),
   requireAuth: pgBoolean('require_auth').notNull().default(false),
   enabled: pgBoolean('enabled').notNull().default(true),
+  order: pgInteger('order').notNull().default(0),
   createdAt: pgTimestamp('created_at', { withTimezone: false }).notNull().defaultNow(),
   updatedAt: pgTimestamp('updated_at', { withTimezone: false }).notNull().defaultNow()
 });

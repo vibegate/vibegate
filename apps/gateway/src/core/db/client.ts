@@ -152,6 +152,7 @@ export function createDb(): { db: DatabaseOperations; kind: 'sqlite' | 'pg' } {
       target TEXT NOT NULL,
       require_auth INTEGER DEFAULT 0 NOT NULL,
       enabled INTEGER DEFAULT 1 NOT NULL,
+      "order" INTEGER DEFAULT 0 NOT NULL,
       created_at INTEGER DEFAULT (unixepoch()) NOT NULL,
       updated_at INTEGER DEFAULT (unixepoch()) NOT NULL
     );
@@ -161,6 +162,11 @@ export function createDb(): { db: DatabaseOperations; kind: 'sqlite' | 'pg' } {
   `);
   try {
     sqlite.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0 NOT NULL;`);
+  } catch (e) {
+    // ignore if column exists
+  }
+  try {
+    sqlite.exec(`ALTER TABLE proxy_routes ADD COLUMN "order" INTEGER DEFAULT 0 NOT NULL;`);
   } catch (e) {
     // ignore if column exists
   }
