@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
-import { Pencil, Trash2, UserPlus, Shield, ShieldOff, RefreshCw } from 'lucide-react';
+import { Badge } from '../components/ui/badge';
+import { Pencil, Trash2, UserPlus, Shield, ShieldOff, RefreshCw, Settings } from 'lucide-react';
 import { api } from '../lib/utils';
 
 type User = {
@@ -15,16 +16,28 @@ type User = {
   name?: string | null;
   isAdmin: boolean;
   createdAt?: string;
+  roles?: Role[];
+};
+
+type Role = {
+  id: string;
+  name: string;
+  displayName: string;
+  permissions: string[];
 };
 
 export default function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deleteUser, setDeleteUser] = useState<User | null>(null);
+  const [rolesUser, setRolesUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isRolesDialogOpen, setIsRolesDialogOpen] = useState(false);
 
   // Edit form state
   const [editName, setEditName] = useState('');
@@ -41,14 +54,35 @@ export default function Users() {
     try {
       setError(null);
       const data = await api<{ users: User[] }>('/admin/users');
-      setUsers(data.users);
+      // Load roles for each user
+      const usersWithRoles = await Promise.all(
+        data.users.map(async (user) => {
+          try {
+            const rolesData = await api<{ roles: Role[] }>(`/admin/users/${user.id}/roles`);
+            return { ...user, roles: rolesData.roles };
+          } catch {
+            return { ...user, roles: [] };
+          }
+        })
+      );
+      setUsers(usersWithRoles);
     } catch (e: any) {
       setError(e.message || String(e));
     }
   }
 
+  async function loadRoles() {
+    try {
+      const data = await api<{ roles: Role[] }>('/admin/roles');
+      setRoles(data.roles);
+    } catch (e: any) {
+      console.error('Failed to load roles:', e);
+    }
+  }
+
   useEffect(() => {
     loadUsers();
+    loadRoles();
   }, []);
 
   function openEditDialog(user: User) {
@@ -70,6 +104,38 @@ export default function Users() {
     setCreatePassword('');
     setCreateIsAdmin(false);
     setIsCreateDialogOpen(true);
+  }
+
+  function openRolesDialog(user: User) {
+    setRolesUser(user);
+    setIsRolesDialogOpen(true);
+  }
+
+  async function assignRole(userId: string, roleId: string) {
+    try {
+      setError(null);
+      await api(`/admin/users/${userId}/roles`, {
+        method: 'POST',
+        body: JSON.stringify({ roleId })
+      });
+      await loadUsers();
+      setSuccess('角色分配成功');
+    } catch (e: any) {
+      setError(e.message || '分配角色失败');
+    }
+  }
+
+  async function removeRole(userId: string, roleId: string) {
+    try {
+      setError(null);
+      await api(`/admin/users/${userId}/roles/${roleId}`, {
+        method: 'DELETE'
+      });
+      await loadUsers();
+      setSuccess('角色移除成功');
+    } catch (e: any) {
+      setError(e.message || '移除角色失败');
+    }
   }
 
   async function handleEditSubmit(e: React.FormEvent) {
@@ -158,7 +224,12 @@ export default function Users() {
         </CardHeader>
       </Card>
 
-      {/* Error Display */}
+      {/* Messages */}
+      {success && (
+        <Alert>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -179,6 +250,7 @@ export default function Users() {
               <TableRow>
                 <TableHead>邮箱</TableHead>
                 <TableHead>姓名</TableHead>
+                <TableHead>权限</TableHead>
                 <TableHead>角色</TableHead>
                 <TableHead>创建时间</TableHead>
                 <TableHead className="text-right">操作</TableHead>
@@ -209,10 +281,36 @@ export default function Users() {
                     </div>
                   </TableCell>
                   <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {user.roles && user.roles.length > 0 ? (
+                        user.roles.slice(0, 2).map(role => (
+                          <Badge key={role.id} variant="secondary" className="text-xs">
+                            {role.displayName}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-sm text-gray-500">无角色</span>
+                      )}
+                      {user.roles && user.roles.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{user.roles.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
                     <div className="text-sm text-gray-500">{formatDate(user.createdAt)}</div>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openRolesDialog(user)}
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        角色
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -385,6 +483,94 @@ export default function Users() {
             </Button>
             <Button variant="destructive" onClick={handleDeleteConfirm}>
               确认删除
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Roles Management Dialog */}
+      <Dialog open={isRolesDialogOpen} onOpenChange={setIsRolesDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>管理用户角色</DialogTitle>
+            <DialogDescription>
+              为用户 <strong>{rolesUser?.email}</strong> 分配和管理角色
+            </DialogDescription>
+          </DialogHeader>
+
+          {rolesUser && (
+            <div className="space-y-4">
+              {/* Current Roles */}
+              <div>
+                <Label className="text-base font-medium">当前角色</Label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {rolesUser.roles && rolesUser.roles.length > 0 ? (
+                    rolesUser.roles.map(role => (
+                      <div key={role.id} className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm">
+                        <span>{role.displayName}</span>
+                        <button
+                          onClick={() => removeRole(rolesUser.id, role.id)}
+                          className="text-blue-500 hover:text-blue-700 ml-1"
+                          title="移除角色"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500">该用户暂无分配角色</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Available Roles */}
+              <div>
+                <Label className="text-base font-medium">可分配角色</Label>
+                <div className="mt-2 grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                  {roles
+                    .filter(role => !rolesUser.roles?.some(ur => ur.id === role.id))
+                    .map(role => (
+                      <div key={role.id} className="flex items-center justify-between p-2 border rounded">
+                        <div>
+                          <div className="font-medium text-sm">{role.displayName}</div>
+                          <div className="text-xs text-gray-500">{role.name}</div>
+                          {role.permissions.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {role.permissions.slice(0, 3).map(perm => (
+                                <Badge key={perm} variant="outline" className="text-xs">
+                                  {perm}
+                                </Badge>
+                              ))}
+                              {role.permissions.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{role.permissions.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => assignRole(rolesUser.id, role.id)}
+                        >
+                          分配
+                        </Button>
+                      </div>
+                    ))}
+                  {roles.filter(role => !rolesUser.roles?.some(ur => ur.id === role.id)).length === 0 && (
+                    <div className="text-sm text-gray-500 text-center py-4">
+                      所有角色已分配给该用户
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setIsRolesDialogOpen(false)}>
+              完成
             </Button>
           </DialogFooter>
         </DialogContent>

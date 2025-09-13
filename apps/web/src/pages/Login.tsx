@@ -6,6 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { api } from '../lib/utils';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,6 +15,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Get the redirect URL from query params, default to profile page
   const getRedirectUrl = () => {
@@ -32,6 +34,13 @@ export default function Login() {
     return '/vibegate/profile'; // Default redirect to profile
   };
 
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate(getRedirectUrl());
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -48,6 +57,17 @@ export default function Login() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-lg">加载中...</div>
+        </div>
+      </div>
+    );
   }
 
   return (

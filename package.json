@@ -7,7 +7,9 @@
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
-    "smoke": "node scripts/smoke-gateway.mjs"
+    "smoke": "node scripts/smoke-gateway.mjs",
+    "cli": "pnpm --filter @vibegate/cli start",
+    "cli:dev": "pnpm --filter @vibegate/cli dev"
   },
   "devDependencies": {
     "prettier": "^3.5.3",

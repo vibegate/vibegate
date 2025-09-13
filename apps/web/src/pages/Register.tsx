@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -6,6 +6,7 @@ import { Label } from '../components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { api } from '../lib/utils';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Register() {
   const [email, setEmail] = useState('');
@@ -15,6 +16,7 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Get the redirect URL from query params, default to profile page
   const getRedirectUrl = () => {
@@ -32,6 +34,13 @@ export default function Register() {
     }
     return '/vibegate/profile'; // Default redirect to profile
   };
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate(getRedirectUrl());
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,6 +62,17 @@ export default function Register() {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-lg">加载中...</div>
+        </div>
+      </div>
+    );
   }
 
   return (

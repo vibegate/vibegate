@@ -4,6 +4,7 @@ import { config } from './config';
 import { authRoutes } from './core/routes/auth';
 import { adminRoutes } from './core/routes/adminRoutes';
 import { adminUsersRoutes } from './core/routes/adminUsers';
+import { adminRolesRoutes } from './core/routes/adminRoles';
 import { proxyRoutes } from './core/proxy';
 import { loadPlugins } from './loader';
 import fs from 'node:fs';
@@ -20,6 +21,7 @@ async function buildServer() {
   await authRoutes(app);
   await adminRoutes(app);
   await adminUsersRoutes(app);
+  await adminRolesRoutes(app);
 
   // Serve built web app statically under /vibegate (production scheme A)
   const webDistDir = path.resolve(process.cwd(), '..', 'web', 'dist');

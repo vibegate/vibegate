@@ -129,8 +129,28 @@ export async function authRoutes(app: FastifyInstance) {
       if (!user) {
         return reply.code(404).send({ error: 'User not found' });
       }
+
+      // Get user roles
+      const roles = await db.userRoles.getUserRoles(user.id);
+      const rolesWithPermissions = roles.map((r: any) => ({
+        ...r,
+        permissions: JSON.parse(r.permissions || '[]')
+      }));
+
+      // Merge all permissions from roles
+      const allPermissions = new Set<string>();
+      rolesWithPermissions.forEach((role: any) => {
+        role.permissions.forEach((perm: string) => allPermissions.add(perm));
+      });
+
       const { hashedPassword, ...sanitized } = user;
-      return { user: sanitized };
+      return {
+        user: {
+          ...sanitized,
+          roles: rolesWithPermissions,
+          permissions: Array.from(allPermissions)
+        }
+      };
     } catch (e) {
       return reply.code(401).send({ error: 'Invalid or expired token' });
     }
@@ -149,8 +169,28 @@ export async function authRoutes(app: FastifyInstance) {
       if (!user) {
         return reply.code(404).send({ error: 'User not found' });
       }
+
+      // Get user roles
+      const roles = await db.userRoles.getUserRoles(user.id);
+      const rolesWithPermissions = roles.map((r: any) => ({
+        ...r,
+        permissions: JSON.parse(r.permissions || '[]')
+      }));
+
+      // Merge all permissions from roles
+      const allPermissions = new Set<string>();
+      rolesWithPermissions.forEach((role: any) => {
+        role.permissions.forEach((perm: string) => allPermissions.add(perm));
+      });
+
       const { hashedPassword, ...sanitized } = user;
-      return { user: sanitized };
+      return {
+        user: {
+          ...sanitized,
+          roles: rolesWithPermissions,
+          permissions: Array.from(allPermissions)
+        }
+      };
     } catch (e) {
       return reply.code(401).send({ error: 'Invalid or expired token' });
     }

@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Admin from './pages/Admin';
 import Users from './pages/Users';
+import Roles from './pages/Roles';
 import Profile from './pages/Profile';
 import Logout from './pages/Logout';
 
@@ -25,6 +26,7 @@ export default function App() {
               <Routes>
                 <Route path="/vibegate/admin" element={<Admin />} />
                 <Route path="/vibegate/admin/users" element={<Users />} />
+                <Route path="/vibegate/admin/roles" element={<Roles />} />
                 <Route path="*" element={<Navigate to="/vibegate/login" replace />} />
               </Routes>
             </div>

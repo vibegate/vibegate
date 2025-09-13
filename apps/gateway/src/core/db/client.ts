@@ -6,7 +6,7 @@ import { Pool } from 'pg';
 import * as schema from './schema';
 import path from 'node:path';
 import fs from 'node:fs';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 export type DbClient = ReturnType<typeof drizzleSqlite> | ReturnType<typeof drizzlePg>;
 
@@ -30,6 +30,20 @@ export interface DatabaseOperations {
     create: (route: any) => Promise<any>;
     update: (id: string, route: any) => Promise<any>;
     delete: (id: string) => Promise<void>;
+  };
+  roles: {
+    list: () => Promise<any[]>;
+    findById: (id: string) => Promise<any | null>;
+    findByName: (name: string) => Promise<any | null>;
+    create: (role: any) => Promise<any>;
+    update: (id: string, role: any) => Promise<any>;
+    delete: (id: string) => Promise<void>;
+  };
+  userRoles: {
+    getUserRoles: (userId: string) => Promise<any[]>;
+    assignRole: (userId: string, roleId: string, assignedBy?: string) => Promise<void>;
+    removeRole: (userId: string, roleId: string) => Promise<void>;
+    getUsersWithRole: (roleId: string) => Promise<any[]>;
   };
 }
 
@@ -82,6 +96,69 @@ class SqliteOperations implements DatabaseOperations {
     },
     delete: async (id: string) => {
       await this.db.delete(schema.proxyRoutesSqlite).where(eq(schema.proxyRoutesSqlite.id, id));
+    }
+  };
+
+  roles = {
+    list: async () => {
+      return await this.db.select().from(schema.rolesSqlite);
+    },
+    findById: async (id: string) => {
+      const result = await this.db.select().from(schema.rolesSqlite).where(eq(schema.rolesSqlite.id, id));
+      return result[0] || null;
+    },
+    findByName: async (name: string) => {
+      const result = await this.db.select().from(schema.rolesSqlite).where(eq(schema.rolesSqlite.name, name));
+      return result[0] || null;
+    },
+    create: async (role: any) => {
+      const result = await this.db.insert(schema.rolesSqlite).values(role).returning();
+      return result[0];
+    },
+    update: async (id: string, role: any) => {
+      const result = await this.db.update(schema.rolesSqlite).set(role).where(eq(schema.rolesSqlite.id, id)).returning();
+      return result[0];
+    },
+    delete: async (id: string) => {
+      await this.db.delete(schema.rolesSqlite).where(eq(schema.rolesSqlite.id, id));
+    }
+  };
+
+  userRoles = {
+    getUserRoles: async (userId: string) => {
+      const results = await this.db
+        .select({
+          roleId: schema.userRolesSqlite.roleId,
+          role: schema.rolesSqlite
+        })
+        .from(schema.userRolesSqlite)
+        .innerJoin(schema.rolesSqlite, eq(schema.userRolesSqlite.roleId, schema.rolesSqlite.id))
+        .where(eq(schema.userRolesSqlite.userId, userId));
+      return results.map(r => r.role);
+    },
+    assignRole: async (userId: string, roleId: string, assignedBy?: string) => {
+      await this.db.insert(schema.userRolesSqlite).values({
+        userId,
+        roleId,
+        assignedBy: assignedBy || null
+      });
+    },
+    removeRole: async (userId: string, roleId: string) => {
+      await this.db.delete(schema.userRolesSqlite)
+        .where(
+          sql`${schema.userRolesSqlite.userId} = ${userId} AND ${schema.userRolesSqlite.roleId} = ${roleId}`
+        );
+    },
+    getUsersWithRole: async (roleId: string) => {
+      const results = await this.db
+        .select({
+          userId: schema.userRolesSqlite.userId,
+          user: schema.usersSqlite
+        })
+        .from(schema.userRolesSqlite)
+        .innerJoin(schema.usersSqlite, eq(schema.userRolesSqlite.userId, schema.usersSqlite.id))
+        .where(eq(schema.userRolesSqlite.roleId, roleId));
+      return results.map(r => r.user);
     }
   };
 }
@@ -137,6 +214,69 @@ class PostgresOperations implements DatabaseOperations {
       await this.db.delete(schema.proxyRoutesPg).where(eq(schema.proxyRoutesPg.id, id));
     }
   };
+
+  roles = {
+    list: async () => {
+      return await this.db.select().from(schema.rolesPg);
+    },
+    findById: async (id: string) => {
+      const result = await this.db.select().from(schema.rolesPg).where(eq(schema.rolesPg.id, id));
+      return result[0] || null;
+    },
+    findByName: async (name: string) => {
+      const result = await this.db.select().from(schema.rolesPg).where(eq(schema.rolesPg.name, name));
+      return result[0] || null;
+    },
+    create: async (role: any) => {
+      const result = await this.db.insert(schema.rolesPg).values(role).returning();
+      return result[0];
+    },
+    update: async (id: string, role: any) => {
+      const result = await this.db.update(schema.rolesPg).set(role).where(eq(schema.rolesPg.id, id)).returning();
+      return result[0];
+    },
+    delete: async (id: string) => {
+      await this.db.delete(schema.rolesPg).where(eq(schema.rolesPg.id, id));
+    }
+  };
+
+  userRoles = {
+    getUserRoles: async (userId: string) => {
+      const results = await this.db
+        .select({
+          roleId: schema.userRolesPg.roleId,
+          role: schema.rolesPg
+        })
+        .from(schema.userRolesPg)
+        .innerJoin(schema.rolesPg, eq(schema.userRolesPg.roleId, schema.rolesPg.id))
+        .where(eq(schema.userRolesPg.userId, userId));
+      return results.map(r => r.role);
+    },
+    assignRole: async (userId: string, roleId: string, assignedBy?: string) => {
+      await this.db.insert(schema.userRolesPg).values({
+        userId,
+        roleId,
+        assignedBy: assignedBy || null
+      });
+    },
+    removeRole: async (userId: string, roleId: string) => {
+      await this.db.delete(schema.userRolesPg)
+        .where(
+          sql`${schema.userRolesPg.userId} = ${userId} AND ${schema.userRolesPg.roleId} = ${roleId}`
+        );
+    },
+    getUsersWithRole: async (roleId: string) => {
+      const results = await this.db
+        .select({
+          userId: schema.userRolesPg.userId,
+          user: schema.usersPg
+        })
+        .from(schema.userRolesPg)
+        .innerJoin(schema.usersPg, eq(schema.userRolesPg.userId, schema.usersPg.id))
+        .where(eq(schema.userRolesPg.roleId, roleId));
+      return results.map(r => r.user);
+    }
+  };
 }
 
 export function createDb(): { db: DatabaseOperations; kind: 'sqlite' | 'pg' } {
@@ -171,6 +311,22 @@ export function createDb(): { db: DatabaseOperations; kind: 'sqlite' | 'pg' } {
       "order" INTEGER DEFAULT 0 NOT NULL,
       created_at INTEGER DEFAULT (unixepoch()) NOT NULL,
       updated_at INTEGER DEFAULT (unixepoch()) NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS roles (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      display_name TEXT NOT NULL,
+      description TEXT,
+      permissions TEXT NOT NULL DEFAULT '[]',
+      created_at INTEGER DEFAULT (unixepoch()) NOT NULL,
+      updated_at INTEGER DEFAULT (unixepoch()) NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS user_roles (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role_id TEXT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+      assigned_at INTEGER DEFAULT (unixepoch()) NOT NULL,
+      assigned_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      PRIMARY KEY (user_id, role_id)
     );
     -- attempt to add missing columns (older dev DBs)
     -- try to add is_admin for older databases

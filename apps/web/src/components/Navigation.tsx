@@ -37,6 +37,7 @@ export default function Navigation() {
       <div className="flex gap-4 text-sm">
         <Link to="/vibegate/admin" className="text-gray-600 hover:text-gray-900">管理</Link>
         <Link to="/vibegate/admin/users" className="text-gray-600 hover:text-gray-900">用户</Link>
+        <Link to="/vibegate/admin/roles" className="text-gray-600 hover:text-gray-900">角色</Link>
       </div>
 
       {currentUser && (

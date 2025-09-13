@@ -84,11 +84,28 @@ export async function proxyRoutes(app: FastifyInstance) {
           }
           return reply.code(401).send({ error: 'User not found' });
         }
+
+        // Get user roles
+        const roles = await db.userRoles.getUserRoles(user.id);
+        const rolesWithPermissions = roles.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          permissions: JSON.parse(r.permissions || '[]')
+        }));
+
+        // Merge all permissions from roles
+        const allPermissions = new Set<string>();
+        rolesWithPermissions.forEach((role: any) => {
+          role.permissions.forEach((perm: string) => allPermissions.add(perm));
+        });
+
         userInfo = {
           id: user.id,
           email: user.email,
           name: user.name,
-          isAdmin: user.isAdmin
+          isAdmin: user.isAdmin,
+          roles: rolesWithPermissions,
+          permissions: Array.from(allPermissions)
         };
       } catch (e) {
         // Check if this is a browser request
