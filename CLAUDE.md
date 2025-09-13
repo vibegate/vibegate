@@ -29,11 +29,6 @@ pnpm format                 # Format code with Prettier
 pnpm check-types            # TypeScript type checking via Turbo
 ```
 
-### Testing
-```bash
-pnpm smoke                  # Run smoke tests (scripts/smoke-gateway.mjs)
-```
-
 ## Architecture Overview
 
 ### Database Architecture
@@ -63,7 +58,8 @@ pnpm smoke                  # Run smoke tests (scripts/smoke-gateway.mjs)
 - **Built-in Plugins**: Located in `apps/gateway/src/plugins/`
 
 ### Frontend Architecture
-- **Admin UI**: React application in `apps/web/` using Vite, React Router, and TailwindCSS
+- **Admin UI**: React application in `apps/web/` using Vite, React Router, TailwindCSS, and shadcn/ui components
+- **Design System**: Uses shadcn/ui for consistent, accessible UI components
 - **Base Path**: Web app is served under `/vibegate` path in production
 - **API Integration**: Communicates with gateway via `/vibegate/api` endpoints
 - **Static Serving**: In production, built web assets are served directly by the gateway
