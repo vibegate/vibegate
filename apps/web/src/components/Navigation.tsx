@@ -35,23 +35,23 @@ export default function Navigation() {
   return (
     <nav className="flex items-center justify-between bg-white border-b border-gray-200 px-6 py-4 mb-6">
       <div className="flex gap-4 text-sm">
-        <Link to="/vibegate/login" className="text-gray-600 hover:text-gray-900">登录</Link>
-        <Link to="/vibegate/register" className="text-gray-600 hover:text-gray-900">注册</Link>
         <Link to="/vibegate/admin" className="text-gray-600 hover:text-gray-900">管理</Link>
         <Link to="/vibegate/admin/users" className="text-gray-600 hover:text-gray-900">用户</Link>
       </div>
 
       {currentUser && (
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm">
-            <User className="w-4 h-4" />
-            <span>{currentUser.name || currentUser.email}</span>
-            {currentUser.isAdmin && (
-              <span className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs">
-                Admin
-              </span>
-            )}
-          </div>
+          <Link to="/vibegate/profile">
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm hover:bg-blue-100 transition-colors cursor-pointer">
+              <User className="w-4 h-4" />
+              <span>{currentUser.name || currentUser.email}</span>
+              {currentUser.isAdmin && (
+                <span className="bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs">
+                  Admin
+                </span>
+              )}
+            </div>
+          </Link>
 
           <Link to="/vibegate/logout">
             <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">

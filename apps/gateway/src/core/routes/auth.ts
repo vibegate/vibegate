@@ -135,4 +135,24 @@ export async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send({ error: 'Invalid or expired token' });
     }
   });
+
+  // Get user profile (alias for /auth/me)
+  app.get('/vibegate/api/auth/profile', async (req, reply) => {
+    const token = getTokenFromRequest(req);
+    if (!token) {
+      return reply.code(401).send({ error: 'Not authenticated' });
+    }
+
+    try {
+      const payload = verifyToken(token);
+      const user = await db.users.findById(payload.userId);
+      if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+      }
+      const { hashedPassword, ...sanitized } = user;
+      return { user: sanitized };
+    } catch (e) {
+      return reply.code(401).send({ error: 'Invalid or expired token' });
+    }
+  });
 }

@@ -1,9 +1,12 @@
-VibeHacks Presentation
-
 # VibeGate - 帮你最速验证原型
 
 ## 和无聊的的重复性工作Say NO!
+
 - 用户系统
+  - 注册/登录/登出
+  - 邮箱验证
+  - 找回密码
+  - OAuth登录
 - Waiting List
 - 订阅支付
 - 数据分析
@@ -15,15 +18,24 @@ VibeHacks Presentation
 
 ## 最小的原型验证
 
+- 没有付费，没有验证
 
 ## Vibe Coding新思考
 
-工程化管理
+CTO模拟器
 代码熵
+
+## 特性
+
+- 可拔插 可替换
 
 ## 重写一个赛事网站要多久
 
 ## todo
 
+- 重写一遍
+- 登陆注册界面自定义
+
+## 加群做股东
 
 

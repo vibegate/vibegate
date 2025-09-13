@@ -60,12 +60,28 @@ export async function proxyRoutes(app: FastifyInstance) {
     if (matched.requireAuth) {
       const token = getTokenFromRequest(req);
       if (!token) {
+        // Check if this is a browser request (Accept header includes text/html)
+        const acceptHeader = req.headers.accept || '';
+        if (acceptHeader.includes('text/html')) {
+          // Redirect to login with next parameter for browser requests
+          const currentPath = req.url;
+          const loginUrl = `/vibegate/login?next=${encodeURIComponent(currentPath)}`;
+          return reply.code(302).header('Location', loginUrl).send();
+        }
+        // API request - return 401
         return reply.code(401).send({ error: 'Authentication required' });
       }
       try {
         const payload = verifyToken(token);
         const user = await db.users.findById(payload.userId);
         if (!user) {
+          // Check if this is a browser request
+          const acceptHeader = req.headers.accept || '';
+          if (acceptHeader.includes('text/html')) {
+            const currentPath = req.url;
+            const loginUrl = `/vibegate/login?next=${encodeURIComponent(currentPath)}`;
+            return reply.code(302).header('Location', loginUrl).send();
+          }
           return reply.code(401).send({ error: 'User not found' });
         }
         userInfo = {
@@ -75,6 +91,13 @@ export async function proxyRoutes(app: FastifyInstance) {
           isAdmin: user.isAdmin
         };
       } catch (e) {
+        // Check if this is a browser request
+        const acceptHeader = req.headers.accept || '';
+        if (acceptHeader.includes('text/html')) {
+          const currentPath = req.url;
+          const loginUrl = `/vibegate/login?next=${encodeURIComponent(currentPath)}`;
+          return reply.code(302).header('Location', loginUrl).send();
+        }
         return reply.code(401).send({ error: 'Invalid or expired token' });
       }
     }

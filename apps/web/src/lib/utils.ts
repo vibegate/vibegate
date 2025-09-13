@@ -36,7 +36,10 @@ export async function api<T = any>(path: string, init?: RequestInit): Promise<T>
     ...init,
   });
   if (res.status === 401) {
-    window.location.assign('/vibegate/login');
+    // Redirect to login with current page as next parameter
+    const currentPath = window.location.pathname + window.location.search;
+    const loginUrl = `/vibegate/login?next=${encodeURIComponent(currentPath)}`;
+    window.location.assign(loginUrl);
     throw new Error('Unauthorized');
   }
   if (!res.ok) throw new Error(await res.text());
