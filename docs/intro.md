@@ -49,9 +49,25 @@ Simple to use
 
 通过独立网关服务的反向代理实现（Fastify + 原生 fetch）。VibeGate 根据路径前缀将请求转发到目标服务，支持：
 
-- 路由优先级（更长前缀优先）
+- 路由优先级（可通过 order 字段自定义优先级）
 - 认证要求（匹配到路由后再校验）
 - 路径重写（去除匹配前缀）
+- **用户信息传递**：需要认证的路由会自动在转发请求中添加 `Vg-User` header，包含当前用户的身份信息
+
+#### 用户信息传递
+
+当代理路由设置了 `requireAuth: true` 时，VibeGate 会在转发请求时自动添加 `Vg-User` header，包含 JSON 格式的用户信息：
+
+```json
+{
+  "id": "user-uuid",
+  "email": "user@example.com",
+  "name": "User Name",
+  "isAdmin": false
+}
+```
+
+后端应用可以直接解析该 header 获取用户身份，无需自己实现认证逻辑。
 
 ### 项目结构
 
@@ -101,6 +117,7 @@ Web 端（包含登录/注册与管理 UI）：Vite + React + TailwindCSS（shad
 - target (目标服务地址)
 - requireAuth (是否需要认证)
 - enabled (是否启用)
+- order (路由优先级，数字越小优先级越高)
 - createdAt
 - updatedAt
 
@@ -121,6 +138,7 @@ Web 端（包含登录/注册与管理 UI）：Vite + React + TailwindCSS（shad
 - POST /vibegate/api/admin/routes - 创建代理规则
 - PUT /vibegate/api/admin/routes/:id - 更新代理规则
 - DELETE /vibegate/api/admin/routes/:id - 删除代理规则
+- PUT /vibegate/api/admin/routes/order - 批量更新路由优先级
 
 ### 用户管理（需要认证）
 

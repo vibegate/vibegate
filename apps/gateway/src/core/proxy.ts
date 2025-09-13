@@ -56,13 +56,24 @@ export async function proxyRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: 'No matching proxy route' });
     }
 
+    let userInfo = null;
     if (matched.requireAuth) {
       const token = getTokenFromRequest(req);
       if (!token) {
         return reply.code(401).send({ error: 'Authentication required' });
       }
       try {
-        verifyToken(token);
+        const payload = verifyToken(token);
+        const user = await db.users.findById(payload.userId);
+        if (!user) {
+          return reply.code(401).send({ error: 'User not found' });
+        }
+        userInfo = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          isAdmin: user.isAdmin
+        };
       } catch (e) {
         return reply.code(401).send({ error: 'Invalid or expired token' });
       }
@@ -79,10 +90,16 @@ export async function proxyRoutes(app: FastifyInstance) {
         }
       }
 
+      // Add user information header if user is authenticated
+      if (userInfo) {
+        headers['Vg-User'] = JSON.stringify(userInfo);
+      }
+
       const response = await fetch(targetUrl.toString(), {
         method: req.method as string,
         headers,
-        body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+        body: req.method !== 'GET' && req.method !== 'HEAD' && req.body ?
+          (typeof req.body === 'string' ? req.body : JSON.stringify(req.body)) : undefined,
         redirect: 'manual'
       });
 

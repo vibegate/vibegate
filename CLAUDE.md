@@ -87,6 +87,64 @@ All VibeGate APIs use the `/vibegate` prefix to avoid conflicts with proxied app
 1. Request arrives at gateway
 2. Check if path matches `/vibegate/*` (internal routes)
 3. If not, check proxy_routes table for matching path
-4. If route requires auth, validate JWT token
-5. Forward request to target service or handle internally
+4. If route requires auth, validate JWT token and extract user info
+5. Forward request to target service with user information header
 6. Apply any plugin hooks during request/response lifecycle
+
+### User Information Forwarding
+
+When a proxy route requires authentication (`requireAuth: true`), VibeGate automatically forwards user information to the backend service via the `Vg-User` header.
+
+#### Vg-User Header Format
+
+The `Vg-User` header contains a JSON string with the authenticated user's information:
+
+```json
+{
+  "id": "user-uuid",
+  "email": "user@example.com",
+  "name": "User Name",
+  "isAdmin": false
+}
+```
+
+#### Backend Integration Example
+
+Your backend application can extract and parse the user information:
+
+**Node.js/Express:**
+
+```javascript
+app.use((req, res, next) => {
+  const userHeader = req.headers['vg-user'];
+  if (userHeader) {
+    try {
+      req.user = JSON.parse(userHeader);
+    } catch (e) {
+      console.error('Failed to parse Vg-User header:', e);
+    }
+  }
+  next();
+});
+```
+
+**Python/FastAPI:**
+
+```python
+from fastapi import Header, HTTPException
+import json
+
+async def get_current_user(vg_user: str = Header(None, alias="vg-user")):
+    if not vg_user:
+        return None
+    try:
+        return json.loads(vg_user)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid user header")
+```
+
+**Important Notes:**
+
+- The `Vg-User` header is only added for routes that require authentication
+- Backend services should not trust this header for security decisions - it's for convenience only
+- The header is automatically managed by VibeGate and cannot be spoofed by clients
