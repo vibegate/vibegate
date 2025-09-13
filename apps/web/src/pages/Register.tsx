@@ -14,9 +14,12 @@ export default function Register() {
     e.preventDefault();
     setMsg(null);
     try {
-      await api('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name }) });
+      console.log('Attempting registration with:', { email, name: name || undefined });
+      const result = await api('/auth/register', { method: 'POST', body: JSON.stringify({ email, password, name: name || undefined }) });
+      console.log('Registration successful:', result);
       navigate('/vibegate/admin');
     } catch (e: any) {
+      console.error('Registration failed:', e);
       setMsg(`注册失败: ${e.message || e}`);
     }
   }

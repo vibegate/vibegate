@@ -34,9 +34,10 @@ export default function Admin() {
     }
   }
 
+
   useEffect(() => {
     load();
-    fetch('/vibegate/health')
+    fetch('/vibegate/api/health')
       .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
       .then(() => setHealth('ok'))
       .catch(() => setHealth('error'));
@@ -147,7 +148,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-6">
+    <div className="space-y-6">
       {/* Header */}
       <Card>
         <CardHeader>
@@ -163,6 +164,7 @@ export default function Admin() {
                 <div className={`w-2 h-2 rounded-full ${health === 'ok' ? 'bg-green-500' : 'bg-red-500'}`} />
                 健康状态: {health}
               </div>
+
               <Button onClick={load} size="sm" variant="outline">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 刷新

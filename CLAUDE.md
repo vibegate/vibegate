@@ -70,7 +70,7 @@ pnpm check-types            # TypeScript type checking via Turbo
 All VibeGate APIs use the `/vibegate` prefix to avoid conflicts with proxied applications:
 - `/vibegate/api/auth/*` - Authentication endpoints
 - `/vibegate/api/admin/*` - Admin management endpoints
-- `/vibegate/health` - Health check endpoint
+- `/vibegate/api/health` - Health check endpoint
 
 ### Database Migrations
 - No migration system currently implemented
