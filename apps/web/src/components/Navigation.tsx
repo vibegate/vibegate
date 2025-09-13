@@ -27,16 +27,6 @@ export default function Navigation() {
     }
   }
 
-  async function logout() {
-    try {
-      await api('/auth/logout', { method: 'POST' });
-      window.location.assign('/vibegate/login');
-    } catch (e) {
-      console.error('Logout failed:', e);
-      // Force redirect anyway
-      window.location.assign('/vibegate/login');
-    }
-  }
 
   useEffect(() => {
     loadCurrentUser();
@@ -63,10 +53,12 @@ export default function Navigation() {
             )}
           </div>
 
-          <Button onClick={logout} size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-            <LogOut className="w-4 h-4 mr-2" />
-            登出
-          </Button>
+          <Link to="/vibegate/logout">
+            <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <LogOut className="w-4 h-4 mr-2" />
+              登出
+            </Button>
+          </Link>
         </div>
       )}
     </nav>

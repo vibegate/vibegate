@@ -20,6 +20,8 @@ export interface DatabaseOperations {
     findByEmail: (email: string) => Promise<any | null>;
     findById: (id: string) => Promise<any | null>;
     create: (user: any) => Promise<any>;
+    update: (id: string, user: any) => Promise<any>;
+    delete: (id: string) => Promise<void>;
     list: () => Promise<any[]>;
   };
   proxyRoutes: {
@@ -46,6 +48,13 @@ class SqliteOperations implements DatabaseOperations {
     create: async (user: any) => {
       const result = await this.db.insert(schema.usersSqlite).values(user).returning();
       return result[0];
+    },
+    update: async (id: string, user: any) => {
+      const result = await this.db.update(schema.usersSqlite).set(user).where(eq(schema.usersSqlite.id, id)).returning();
+      return result[0];
+    },
+    delete: async (id: string) => {
+      await this.db.delete(schema.usersSqlite).where(eq(schema.usersSqlite.id, id));
     },
     list: async () => {
       return await this.db.select().from(schema.usersSqlite);
@@ -92,6 +101,13 @@ class PostgresOperations implements DatabaseOperations {
     create: async (user: any) => {
       const result = await this.db.insert(schema.usersPg).values(user).returning();
       return result[0];
+    },
+    update: async (id: string, user: any) => {
+      const result = await this.db.update(schema.usersPg).set(user).where(eq(schema.usersPg.id, id)).returning();
+      return result[0];
+    },
+    delete: async (id: string) => {
+      await this.db.delete(schema.usersPg).where(eq(schema.usersPg.id, id));
     },
     list: async () => {
       return await this.db.select().from(schema.usersPg);

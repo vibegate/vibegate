@@ -4,22 +4,31 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Admin from './pages/Admin';
 import Users from './pages/Users';
+import Logout from './pages/Logout';
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50">
-        <Navigation />
-        <div className="max-w-5xl mx-auto p-6">
-          <Routes>
-            <Route path="/vibegate/login" element={<Login />} />
-            <Route path="/vibegate/register" element={<Register />} />
-            <Route path="/vibegate/admin" element={<Admin />} />
-            <Route path="/vibegate/admin/users" element={<Users />} />
-            <Route path="*" element={<Navigate to="/vibegate/login" replace />} />
-          </Routes>
-        </div>
-      </div>
+      <Routes>
+        {/* Logout page with its own layout */}
+        <Route path="/vibegate/logout" element={<Logout />} />
+
+        {/* Other pages with navigation layout */}
+        <Route path="/*" element={
+          <div className="min-h-screen bg-gray-50">
+            <Navigation />
+            <div className="max-w-5xl mx-auto p-6">
+              <Routes>
+                <Route path="/vibegate/login" element={<Login />} />
+                <Route path="/vibegate/register" element={<Register />} />
+                <Route path="/vibegate/admin" element={<Admin />} />
+                <Route path="/vibegate/admin/users" element={<Users />} />
+                <Route path="*" element={<Navigate to="/vibegate/login" replace />} />
+              </Routes>
+            </div>
+          </div>
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }
