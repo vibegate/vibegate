@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const config = {
-  port: Number(process.env.PORT || 4000),
+  port: Number(process.env.PORT || 3000),
   host: process.env.HOST || '0.0.0.0',
   jwtSecret: process.env.JWT_SECRET || 'change-me-in-production',
   // postgres://user:pass@host:5432/db OR file path for sqlite when not provided
@@ -15,4 +15,3 @@ export const config = {
 export function isProduction() {
   return config.nodeEnv === 'production';
 }
-
