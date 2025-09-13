@@ -53,7 +53,7 @@ Simple to use
 - 认证要求（匹配到路由后再校验）
 - 路径重写（去除匹配前缀）
 
-### 项目结构（方案 B）
+### 项目结构
 
 #### docs
 
@@ -76,7 +76,8 @@ Web 端（包含登录/注册与管理 UI）：Vite + React + TailwindCSS（shad
 
 #### apps/debugger
 
-调试用回源服务（Next.js），提供 `/api/echo` 回显接口，用于验证网关反向代理是否正确转发。
+调试用回源服务（Next.js），用于验证网关反向代理是否正确转发。
+会可视化的显示任何请求的细节（Headers、Body等）。
 
 #### packages/plugin-sdk
 

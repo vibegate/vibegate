@@ -1,11 +1,13 @@
 import { headers } from 'next/headers';
 
 interface PageProps {
+  params: Promise<{ slug?: string[] }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function Page({ searchParams }: PageProps) {
+export default async function CatchAllPage({ params, searchParams }: PageProps) {
   const headersList = await headers();
+  const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
   const requestHeaders: Record<string, string> = {};
@@ -14,12 +16,14 @@ export default async function Page({ searchParams }: PageProps) {
     requestHeaders[key] = value;
   });
 
+  const currentPath = resolvedParams.slug ? `/${resolvedParams.slug.join('/')}` : '/';
+
   const requestInfo = {
     timestamp: new Date().toISOString(),
     method: requestHeaders['x-forwarded-method'] || 'GET',
-    path: '/',
+    path: currentPath,
     searchParams: resolvedSearchParams,
-    url: requestHeaders['x-forwarded-url'] || requestHeaders['host'] + '/',
+    url: requestHeaders['x-forwarded-url'] || requestHeaders['host'] + currentPath,
     headers: requestHeaders,
     ip: requestHeaders['x-forwarded-for'] ||
         requestHeaders['x-real-ip'] ||
@@ -123,4 +127,3 @@ export default async function Page({ searchParams }: PageProps) {
     </div>
   );
 }
-
