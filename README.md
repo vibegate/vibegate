@@ -38,14 +38,14 @@ pnpm dev
 # Or start services individually
 pnpm dev --filter gateway    # Gateway service (port 3000)
 pnpm dev --filter web        # Admin UI (port 5173)
-pnpm dev --filter debugger   # Debug service (port 3001)
+pnpm dev --filter debugger   # Debug service (port 3333)
 ```
 
 Access:
 
 - Admin UI: `http://localhost:3000/vibegate/login`
 - API Endpoints: `http://localhost:3000/vibegate/api`
-- Health Check: `http://localhost:3000/vibegate/health`
+- Health Check: `http://localhost:3000/vibegate/api/health`
 
 ### Production Deployment
 
@@ -87,7 +87,7 @@ vibegate/
 ├── apps/
 │   ├── gateway/        # Core gateway service (Fastify + TypeScript)
 │   ├── web/           # Admin UI (React + Vite + TailwindCSS)
-│   └── debugger/      # Debug echo service (Next.js)
+│   └── debugger/      # Debug tool with interactive request tester (Next.js)
 ├── packages/
 │   ├── plugin-sdk/    # Plugin development SDK
 │   ├── common/        # Shared utilities and types
@@ -188,6 +188,15 @@ export default myPlugin;
 - **Database**: SQLite (development) / PostgreSQL (production)
 - **Authentication**: JWT (JSON Web Tokens)
 - **Build Tools**: Turbo + pnpm workspaces
+
+## Debug Tool
+
+The debugger app (`http://localhost:3333`) provides an interactive interface for testing and debugging your VibeGate configuration:
+
+- **Request Testing**: Send HTTP requests with custom headers and bodies
+- **Response Inspection**: View complete request/response details including headers
+- **Proxy Debugging**: Test how VibeGate routes and transforms requests
+- **Authentication Testing**: Test protected routes with authorization tokens
 
 ## Common Commands
 

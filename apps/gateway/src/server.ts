@@ -15,7 +15,7 @@ async function buildServer() {
   await app.register(cookie);
 
   // health
-  app.get('/vibegate/health', async () => ({ status: 'ok' }));
+  app.get('/vibegate/api/health', async () => ({ status: 'ok' }));
 
   await authRoutes(app);
   await adminRoutes(app);
@@ -27,7 +27,7 @@ async function buildServer() {
     app.get('/vibegate/*', async (req, reply) => {
       const pathname = req.url.split('?')[0];
       // Let API and health be handled by API routes
-      if (pathname.startsWith('/vibegate/api') || pathname === '/vibegate/health') {
+      if (pathname.startsWith('/vibegate/api')) {
         // @ts-ignore
         return reply.callNotFound();
       }

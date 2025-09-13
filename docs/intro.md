@@ -144,7 +144,7 @@ pnpm dev --filter gateway
 # 启动管理 Web（Vite，开发端口 5173）
 pnpm dev --filter web
 
-# 启动调试服务（回源，默认 3001）
+# 启动调试服务（回源，默认 3333）
 pnpm dev --filter debugger
 
 # 指定 Postgres（生产/本地均可）
